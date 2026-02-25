@@ -38,13 +38,13 @@ func TestDescribeBodyMultipleChecksums(t *testing.T) {
 	ctx := testctx.WrapWithCfg(t.Context(),
 		config.Project{
 			Release: config.Release{
-				Header: "## Yada yada yada\nsomething\n",
-				Footer: `
+				Header: config.IncludedMarkdown{Content: "## Yada yada yada\nsomething\n"},
+				Footer: config.IncludedMarkdown{Content: `
 ---
 
 ## Checksums
 
-` + "```\n{{ range $key, $value := .Checksums }}{{ $value }} {{ $key }}\n{{ end }}```\n",
+` + "```\n{{ range $key, $value := .Checksums }}{{ $value }} {{ $key }}\n{{ end }}```\n"},
 			},
 		},
 		testctx.WithCurrentTag("v1.0"),
@@ -82,8 +82,8 @@ func TestDescribeBodyWithHeaderAndFooter(t *testing.T) {
 	ctx := testctx.WrapWithCfg(t.Context(),
 		config.Project{
 			Release: config.Release{
-				Header: "## Yada yada yada\nsomething\n",
-				Footer: `
+				Header: config.IncludedMarkdown{Content: "## Yada yada yada\nsomething\n"},
+				Footer: config.IncludedMarkdown{Content: `
 ---
 
 Get images at docker.io/foo/bar:{{.Tag}}
@@ -97,7 +97,7 @@ Get GoReleaser Pro at https://goreleaser.com/pro
 ## Checksums
 
 ` + "```\n{{ .Checksums }}\n```" + `
-				`,
+				`},
 			},
 		},
 		testctx.WithCurrentTag("v1.0"),
@@ -127,7 +127,7 @@ Get GoReleaser Pro at https://goreleaser.com/pro
 func TestDescribeBodyWithInvalidHeaderTemplate(t *testing.T) {
 	ctx := testctx.WrapWithCfg(t.Context(), config.Project{
 		Release: config.Release{
-			Header: "## {{ .Nop }\n",
+			Header: config.IncludedMarkdown{Content: "## {{ .Nop }\n"},
 		},
 	})
 
@@ -138,7 +138,7 @@ func TestDescribeBodyWithInvalidHeaderTemplate(t *testing.T) {
 func TestDescribeBodyWithInvalidFooterTemplate(t *testing.T) {
 	ctx := testctx.WrapWithCfg(t.Context(), config.Project{
 		Release: config.Release{
-			Footer: "{{ .Nops }",
+			Footer: config.IncludedMarkdown{Content: "{{ .Nops }"},
 		},
 	})
 

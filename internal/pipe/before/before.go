@@ -25,7 +25,7 @@ func (Pipe) Run(ctx *context.Context) error {
 	tmpl := tmpl.New(ctx)
 	/* #nosec */
 	for _, step := range ctx.Config.Before.Hooks {
-		s, err := tmpl.Apply(step)
+		s, err := tmpl.Apply(step.Cmd)
 		if err != nil {
 			return err
 		}

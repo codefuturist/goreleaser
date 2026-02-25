@@ -25,14 +25,14 @@ func TestDescription(t *testing.T) {
 }
 
 func TestRunPipe(t *testing.T) {
-	table := [][]string{
+	table := []config.Hooks{
 		nil,
 		{},
-		{"go version"},
-		{"go version", "go list"},
+		{config.Hook{Cmd: "go version"}},
+		{config.Hook{Cmd: "go version"}, config.Hook{Cmd: "go list"}},
 	}
 	if testlib.InPath("bash") {
-		table = append(table, []string{`bash -c "go version; echo \"lala spaces and such\""`})
+		table = append(table, config.Hooks{config.Hook{Cmd: `bash -c "go version; echo \"lala spaces and such\""`}})
 	}
 	for _, tc := range table {
 		ctx := testctx.WrapWithCfg(t.Context(),
@@ -50,7 +50,7 @@ func TestRunPipeInvalidCommand(t *testing.T) {
 	ctx := testctx.WrapWithCfg(t.Context(),
 		config.Project{
 			Before: config.Before{
-				Hooks: []string{`bash -c "echo \"unterminated command\"`},
+				Hooks: config.Hooks{config.Hook{Cmd: `bash -c "echo \"unterminated command\"`}},
 			},
 		})
 
@@ -65,7 +65,7 @@ func TestRunPipeFail(t *testing.T) {
 		ctx := testctx.WrapWithCfg(t.Context(),
 			config.Project{
 				Before: config.Before{
-					Hooks: []string{tc},
+					Hooks: config.Hooks{config.Hook{Cmd: tc}},
 				},
 			})
 
@@ -87,7 +87,7 @@ func TestRunWithEnv(t *testing.T) {
 				"TEST_FILE=" + f,
 			},
 			Before: config.Before{
-				Hooks: []string{testlib.Touch("{{ .Env.TEST_FILE }}")},
+				Hooks: config.Hooks{config.Hook{Cmd: testlib.Touch("{{ .Env.TEST_FILE }}")}},
 			},
 		})))
 	require.FileExists(t, f)
@@ -97,7 +97,7 @@ func TestInvalidTemplate(t *testing.T) {
 	testlib.RequireTemplateError(t, Pipe{}.Run(testctx.WrapWithCfg(t.Context(),
 		config.Project{
 			Before: config.Before{
-				Hooks: []string{"doesnt-matter {{ .fasdsd }"},
+				Hooks: config.Hooks{config.Hook{Cmd: "doesnt-matter {{ .fasdsd }"}},
 			},
 		})))
 }
@@ -110,7 +110,7 @@ func TestSkip(t *testing.T) {
 	t.Run("skip before", func(t *testing.T) {
 		ctx := testctx.WrapWithCfg(t.Context(), config.Project{
 			Before: config.Before{
-				Hooks: []string{""},
+				Hooks: config.Hooks{config.Hook{Cmd: ""}},
 			},
 		}, testctx.Skip(skips.Before))
 
@@ -120,7 +120,7 @@ func TestSkip(t *testing.T) {
 	t.Run("dont skip", func(t *testing.T) {
 		ctx := testctx.WrapWithCfg(t.Context(), config.Project{
 			Before: config.Before{
-				Hooks: []string{""},
+				Hooks: config.Hooks{config.Hook{Cmd: ""}},
 			},
 		})
 

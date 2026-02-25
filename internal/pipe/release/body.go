@@ -2,11 +2,13 @@ package release
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"text/template"
 
 	"github.com/goreleaser/goreleaser/v2/internal/artifact"
 	"github.com/goreleaser/goreleaser/v2/internal/tmpl"
+	"github.com/goreleaser/goreleaser/v2/pkg/config"
 	"github.com/goreleaser/goreleaser/v2/pkg/context"
 )
 
@@ -45,11 +47,19 @@ func describeBody(ctx *context.Context) (bytes.Buffer, error) {
 
 	t := tmpl.New(ctx).WithExtraFields(fields)
 
-	header, err := t.Apply(ctx.Config.Release.Header)
+	headerStr, err := loadIncludedMarkdown(ctx.Config.Release.Header)
+if err != nil {
+return out, err
+}
+header, err := t.Apply(headerStr)
 	if err != nil {
 		return out, err
 	}
-	footer, err := t.Apply(ctx.Config.Release.Footer)
+	footerStr, err := loadIncludedMarkdown(ctx.Config.Release.Footer)
+if err != nil {
+return out, err
+}
+footer, err := t.Apply(footerStr)
 	if err != nil {
 		return out, err
 	}
@@ -65,4 +75,20 @@ func describeBody(ctx *context.Context) (bytes.Buffer, error) {
 		ReleaseNotes: ctx.ReleaseNotes,
 	})
 	return out, err
+}
+
+func loadIncludedMarkdown(md config.IncludedMarkdown) (string, error) {
+if md.Content != "" {
+return md.Content, nil
+}
+rc, err := md.Load()
+if err != nil {
+return "", err
+}
+defer rc.Close()
+bts, err := io.ReadAll(rc)
+if err != nil {
+return "", err
+}
+return string(bts), nil
 }

@@ -182,3 +182,42 @@ func (a *HomebrewDependency) UnmarshalYAML(unmarshal func(any) error) error {
 
 	return nil
 }
+
+// UnmarshalYAML is a custom unmarshaler that wraps strings in arrays.
+func (f *ExtraFile) UnmarshalYAML(unmarshal func(any) error) error {
+	type t ExtraFile
+	var str string
+	if err := unmarshal(&str); err == nil {
+		*f = ExtraFile{Glob: str}
+		return nil
+	}
+
+	var file t
+	if err := unmarshal(&file); err != nil {
+		return err
+	}
+	*f = ExtraFile(file)
+	return nil
+}
+
+func (i IncludedMarkdown) MarshalYAML() (any, error) {
+	if i.Content != "" {
+		return i.Content, nil
+	}
+	return Include(i), nil
+}
+
+func (i *IncludedMarkdown) UnmarshalYAML(unmarshal func(any) error) error {
+	var content string
+	if err := unmarshal(&content); err != nil {
+		var hook Include
+		if err := unmarshal(&hook); err != nil {
+			return err
+		}
+		*i = (IncludedMarkdown)(hook)
+		return nil
+	}
+
+	i.Content = content
+	return nil
+}
