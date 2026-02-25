@@ -74,6 +74,7 @@ const (
 	isSingleTarget  = "IsSingleTarget"
 	isNightly       = "IsNightly"
 	isDraft         = "IsDraft"
+	varK            = "Var"
 	env             = "Env"
 	date            = "Date"
 	now             = "Now"
@@ -139,6 +140,7 @@ func New(ctx *context.Context) *Template {
 		isSingleTarget:  ctx.SingleTarget,
 		isNightly:       false,
 		isDraft:         ctx.Config.Release.Draft,
+		varK:            ctx.Config.Variables,
 		releaseNotes:    ctx.ReleaseNotes,
 		releaseURL:      ctx.ReleaseURL,
 		tagSubject:      ctx.Git.TagSubject,

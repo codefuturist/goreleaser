@@ -18,6 +18,9 @@ import (
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/defaults"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/dist"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/docker"
+	// Pro pipes
+	"github.com/goreleaser/goreleaser/v2/internal/pipe/includes"
+	"github.com/goreleaser/goreleaser/v2/internal/pipe/monorepo"
 	dockerv2 "github.com/goreleaser/goreleaser/v2/internal/pipe/docker/v2"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/effectiveconfig"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/env"
@@ -43,6 +46,7 @@ import (
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/sourcearchive"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/universalbinary"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/upx"
+	"github.com/goreleaser/goreleaser/v2/internal/pipe/variables"
 	"github.com/goreleaser/goreleaser/v2/internal/pipe/winget"
 	"github.com/goreleaser/goreleaser/v2/pkg/context"
 )
@@ -59,12 +63,18 @@ type Piper interface {
 //
 //nolint:gochecknoglobals
 var BuildPipeline = []Piper{
+	// load and merge config includes (Pro)
+	includes.Pipe{},
+	// inject template variables (Pro)
+	variables.Pipe{},
 	// set default dist folder and remove it if `--clean` is set
 	dist.CleanPipe{},
 	// load and validate environment variables
 	env.Pipe{},
 	// get and validate git repo state
 	git.Pipe{},
+	// monorepo scoping (Pro) — after git, before semver
+	monorepo.Pipe{},
 	// parse current tag to a semver
 	semver.Pipe{},
 	// load default configs
