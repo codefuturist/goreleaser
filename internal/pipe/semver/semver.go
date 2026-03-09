@@ -21,7 +21,14 @@ func (Pipe) String() string {
 
 // Run executes the hooks.
 func (Pipe) Run(ctx *context.Context) error {
-	sv, err := semver.NewVersion(ctx.Git.CurrentTag)
+	// If the monorepo pipe already resolved the version (e.g. stripped a tag
+	// prefix like "git-patrol/"), construct a semver-parseable string from it
+	// instead of parsing the raw tag which may contain slashes.
+	tagToParse := ctx.Git.CurrentTag
+	if ctx.Version != "" {
+		tagToParse = "v" + ctx.Version
+	}
+	sv, err := semver.NewVersion(tagToParse)
 	if err != nil {
 		if skips.Any(ctx, skips.Validate) {
 			log.WithError(err).
