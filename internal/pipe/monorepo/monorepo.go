@@ -45,8 +45,9 @@ func (Pipe) Run(ctx *context.Context) error {
 		return fmt.Errorf("monorepo: resolving tag with prefix %q: %w", prefix, err)
 	}
 	if tag != "" {
-		ctx.Git.CurrentTag = tag
-		ctx.Version = strings.TrimPrefix(strings.TrimPrefix(tag, prefix), "v")
+		// Strip the tag prefix so semver pipe can parse it (e.g., "git-patrol/v0.2.0" → "v0.2.0")
+		ctx.Git.CurrentTag = strings.TrimPrefix(tag, prefix)
+		ctx.Version = strings.TrimPrefix(ctx.Git.CurrentTag, "v")
 		log.WithField("tag", tag).WithField("version", ctx.Version).Info("monorepo tag resolved")
 	}
 
