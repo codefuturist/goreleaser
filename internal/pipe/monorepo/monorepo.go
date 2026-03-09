@@ -23,10 +23,11 @@ func (Pipe) Skip(ctx *context.Context) bool {
 
 // Run rewrites the context for monorepo scoping:
 //   - Resolves the current tag using the tag prefix
-//   - Strips the tag prefix from the version
+//   - Sets ctx.Version to the prefix-stripped semver string (e.g. "0.2.0" from "git-patrol/v0.2.0")
+//   - Keeps ctx.Git.CurrentTag as the full prefixed tag so git operations (changelog, git log) use a valid ref
 //   - Rewrites build directories to be relative to monorepo dir
 //   - Scopes dist to monorepo dir
-//   - Adds PrefixedTag and PrefixedPreviousTag to the context
+//   - Filters changelog paths to monorepo dir
 func (Pipe) Run(ctx *context.Context) error {
 	mono := ctx.Config.Monorepo
 	dir := mono.Dir
