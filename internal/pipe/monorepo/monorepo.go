@@ -82,7 +82,17 @@ func (Pipe) Run(ctx *context.Context) error {
 }
 
 func resolveTag(ctx *context.Context, prefix string) (string, error) {
-	// Try to find the most recent tag matching the prefix
+	// If the git pipe already detected a tag on HEAD that matches our prefix,
+	// use it directly. This is the common and correct path: the git pipe runs
+	// `git describe --exact-match --tags` which guarantees the tag is on the
+	// current commit. Overriding it with a version-sort would silently produce
+	// the wrong release version when newer prefix tags exist on other commits.
+	if strings.HasPrefix(ctx.Git.CurrentTag, prefix) {
+		return ctx.Git.CurrentTag, nil
+	}
+
+	// Fallback: no exact tag was found on HEAD (e.g. snapshot mode) — list all
+	// tags with the prefix and take the most recent by version ordering.
 	out, err := git.Clean(git.Run(ctx, "tag", "--list", prefix+"*", "--sort=-version:refname"))
 	if err != nil {
 		return "", err
@@ -90,7 +100,6 @@ func resolveTag(ctx *context.Context, prefix string) (string, error) {
 	if out == "" {
 		return "", fmt.Errorf("no tags found with prefix %q", prefix)
 	}
-	// git.Clean returns only the first line
 	return strings.TrimSpace(out), nil
 }
 

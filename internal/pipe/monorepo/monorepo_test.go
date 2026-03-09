@@ -79,3 +79,43 @@ func TestDefaultTagPrefix(t *testing.T) {
 	// Should use the basename of Dir as tag prefix
 	require.Equal(t, "apps/myapp/dist", ctx.Config.Dist)
 }
+
+// TestResolveTagUsesExistingCurrentTag verifies that resolveTag does not override
+// ctx.Git.CurrentTag with the highest version-sorted tag when the existing tag
+// already matches the prefix. This prevents silently tagging the wrong version
+// when newer prefix tags exist on other commits.
+func TestResolveTagUsesExistingCurrentTag(t *testing.T) {
+	ctx := testctx.WrapWithCfg(
+		t.Context(),
+		config.Project{
+			Monorepo: config.Monorepo{
+				Dir:       "apps/myapp",
+				TagPrefix: "myapp/",
+			},
+		},
+		testctx.WithCurrentTag("myapp/v1.0.0"),
+	)
+	// resolveTag should short-circuit and use the existing tag rather than
+	// querying git (which would require a real repo and might return a newer tag).
+	tag, err := resolveTag(ctx, "myapp/")
+	require.NoError(t, err)
+	require.Equal(t, "myapp/v1.0.0", tag)
+}
+
+func TestResolveTagIgnoresUnrelatedCurrentTag(t *testing.T) {
+	ctx := testctx.WrapWithCfg(
+		t.Context(),
+		config.Project{
+			Monorepo: config.Monorepo{
+				Dir:       "apps/myapp",
+				TagPrefix: "myapp/",
+			},
+		},
+		// Tag on HEAD belongs to a different project — should not be used.
+		testctx.WithCurrentTag("other-app/v2.0.0"),
+	)
+	// resolveTag must NOT use this tag; it should fall back to git.
+	// With no git repo here it will error — that's the expected fallback path.
+	_, err := resolveTag(ctx, "myapp/")
+	require.Error(t, err)
+}
